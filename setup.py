@@ -10,6 +10,7 @@ setup(
     long_description=ldesc,
     author='Sébastien Luttringer',
     license='GPL2',
+    packages=['abs'],
     scripts=['bin/abs', 'bin/auc', 'bin/aurdown'],
     data_files=(
 	  ('/usr/share/abs/', ('README.rst', 'LICENSE', 'CHANGELOG', 'COPYRIGHT')),
