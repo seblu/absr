@@ -1,0 +1,11 @@
+#!/bin/bash
+
+usage() {
+	echo "usage: ${0##*/} auc|aurdown [options] [args]" >&2
+	exit 1
+}
+
+# check min args to 1
+(( $# > 0 )) || usage
+
+exec "$@"
