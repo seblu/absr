@@ -1,0 +1,184 @@
+#!/usr/bin/python
+# coding: utf-8
+
+# auc - Archlinux Upstream Checker
+# Copyright © 2012 Sébastien Luttringer
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+import argparse
+import configparser
+import distutils.version
+import urllib.request
+import logging
+import os
+import re
+import sys
+import xdg.BaseDirectory as BaseDirectory
+
+class Softwares(object):
+
+	default_arch = os.uname()[4]
+
+	def __init__(self, config):
+		self.cp = configparser.RawConfigParser()
+		# path of default config file if not given
+		if config is None:
+			config = os.path.join(BaseDirectory.save_config_path("auc"), "config")
+		# open config file
+		try:
+			self.cp.read(config)
+		except IOError as e:
+			exit("Unable to open %s: %s" % (config, e))
+
+	def softwares_generator(self, softwares=None):
+		if softwares is None:
+			softwares = sorted(self.cp.sections())
+		for name in softwares:
+			d = dict(self.cp.items(name))
+			yield (name, d)
+
+	def get_version_upstream(self, name, value):
+		'''Return upstream version'''
+		# check upstream param
+		if "url" not in value:
+			logging.error("No url specified for %s" % name)
+			raise NameError("Missing url in config file")
+		regex = value.get("regex",
+			"%s-(?:v)?([-.\w]+)\.(?:tar(?:\.gz|\.bz2|\.xz)?|tgz|tbz2|zip)" %
+				value.get("regex_name", name))
+		# do the job
+		v = "(failed)"
+		try:
+			v = self.grep_url(value["url"], regex)
+		except Exception as e:
+			logging.error("Upstream check failed for %s: %s" % (name, e))
+		return v
+
+	def get_version_archlinux(self, name, value):
+		'''Return archlinux version'''
+		# check upstream param
+		arch = value.get("arch", self.default_arch)
+		v = "(failed)"
+		try:
+			url = "http://www.archlinux.org/packages/community/%s/%s/" % (arch, name)
+			v = self.grep_url(url, "<h2>%s ([.\w]+)-[.\w]+</h2>" % name)
+		except Exception as e:
+			logging.debug("Archlinux check failed for %s: %s" % (name, e))
+		return v
+
+	def get_version_saved(self, name, value):
+		'''Return local saved version'''
+		raise NotImplemented()
+
+	def print_names(self, softwares=None):
+		for name, value in self.softwares_generator(softwares):
+			print(name)
+
+	def print_versions(self, softwares=None, only_diff=False):
+		'''Print last version of registered software'''
+		for name, value in self.softwares_generator(softwares):
+			# get compare mode
+			compare = value.get("compare", "archlinux")
+			# upstream version
+			v1 = self.get_version_upstream(name, value)
+			if compare == "archlinux":
+				# compare with archlinux pkg
+				v2 = self.get_version_archlinux(name, value)
+				v1 = v1.replace("-", "_") if v1 is not None else None
+				if only_diff and v1 == v2:
+					continue
+			elif compare == "saved":
+				# compare with saved database
+				raise NotImplemented()
+			else:
+				# no comparaison
+				# so no print if only_diff
+				if only_diff:
+					continue
+				v2 = None
+			self.print_version(name, v1, v2)
+
+	def print_version(self, name, v1, v2):
+		if sys.stdout.isatty():
+			if v1 == "(failed)" or v2 == "(failed)":
+				color = '\033[1;35m'
+			elif v2 is None:
+				color = '\033[1;33m'
+			elif v1 == v2:
+				color = '\033[1;32m'
+			else:
+				color = '\033[1;31m'
+			reset = '\033[m'
+		else:
+			color = ''
+			reset = ''
+		print("%s[%s] %s" % (color, name, v1), end="")
+		if v2 is not None:
+			print(" - %s" % v2, end="")
+		print(reset)
+
+	def grep_url(self, url, version_regex):
+		'''Parse an url for a version regex and return the last'''
+		logging.debug("url: %s" % url)
+		logging.debug("version_regex: %s" % version_regex)
+		o = urllib.request.urlopen(url)
+		v = list(set(re.findall(version_regex, str(o.read()))))
+		logging.debug("verions: %s" % v)
+		return sorted(v, key=distutils.version.LooseVersion, reverse=True)[0]
+
+	def save(self, database):
+		'''Save poll result to database'''
+		return
+
+
+def main():
+	'''Program entry point'''
+	# init log systems
+	logging.basicConfig(format="%(levelname)s: %(message)s")
+	# parser cmdline
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-d", "--debug", action="store_true",
+		help="debug mode")
+	parser.add_argument("-D", "--diff", action="store_true",
+		help="display only different version")
+	parser.add_argument("-l", "--list", action="store_true",
+		help="list registered software")
+	parser.add_argument("-s", "--soft", nargs='+', default=None,
+		help="only check listed software")
+	parser.add_argument("-S", "--no-save", action="store_true",
+		help="doesn't save polling result")
+	parser.add_argument("-b", "--database", default=None,
+		help="database file with saved polling")
+	parser.add_argument("-c", "--config", default=None,
+		help="config file with url to check")
+	args = parser.parse_args()
+	# set global debug mode
+	if args.debug:
+		logging.getLogger().setLevel(logging.DEBUG)
+	# Load software checking object
+	soft = Softwares(args.config)
+	if args.list == True:
+		soft.print_names(args.soft)
+	else:
+		soft.print_versions(args.soft, only_diff=args.diff)
+	if not args.no_save:
+		soft.save(args.database)
+	return True
+
+if __name__ == '__main__':
+	main()
+
+# vim:set ai:
