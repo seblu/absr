@@ -56,9 +56,10 @@ class Softwares(object):
 		if "url" not in value:
 			logging.error("No url specified for %s" % name)
 			raise NameError("Missing url in config file")
-		regex = value.get("regex",
-			"%s-(?:v)?([-.\w]+)\.(?:tar(?:\.gz|\.bz2|\.xz)?|tgz|tbz2|zip)" %
-				value.get("regex_name", name))
+		regex = value.get("regex", "%s[-_]v?(%s)%s" % (
+					value.get("regex_name", name),
+					value.get("regex_version", "[-.\w]+"),
+					value.get("regex_ext", "\.(?:tar(?:\.gz|\.bz2|\.xz)?|tgz|tbz2|zip)")))
 		# do the job
 		v = "(failed)"
 		try:
