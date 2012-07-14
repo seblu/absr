@@ -13,7 +13,7 @@ depends=('python' 'python-xdg' 'bash')
 
 package() {
   cd "$startdir"
-  python setup.py install --root "$pkgdir"
+  python setup.py build --build-base="$srcdir" install --root "$pkgdir"
 }
 
 # vim:set ts=2 sw=2 ft=sh et:
