@@ -21,11 +21,12 @@
 import argparse
 import configparser
 import distutils.version
-import urllib.request
+import json
 import logging
 import os
 import re
 import sys
+import urllib.request
 import xdg.BaseDirectory as BaseDirectory
 
 class Softwares(object):
@@ -80,6 +81,18 @@ class Softwares(object):
 			logging.debug("Archlinux check failed for %s: %s" % (name, e))
 		return v
 
+	def get_version_aur(self, name, value):
+		'''Return archlinux user repository version'''
+		v = "(failed)"
+		try:
+			url = "http://aur.archlinux.org/rpc.php?type=info&arg=%s" % (name)
+			o = urllib.request.urlopen(url)
+			d = json.loads(o.read().decode("utf-8"))
+			v = d["results"]["Version"].rsplit("-")[0]
+		except Exception as e:
+			logging.debug("AUR check failed for %s: %s" % (name, e))
+		return v
+
 	def get_version_saved(self, name, value):
 		'''Return local saved version'''
 		raise NotImplemented()
@@ -98,6 +111,11 @@ class Softwares(object):
 			if compare == "archlinux":
 				# compare with archlinux pkg
 				v2 = self.get_version_archlinux(name, value)
+				v1 = v1.replace("-", "_") if v1 is not None else None
+				if only_diff and v1 == v2:
+					continue
+			elif compare == "aur":
+				v2 = self.get_version_aur(name, value)
 				v1 = v1.replace("-", "_") if v1 is not None else None
 				if only_diff and v1 == v2:
 					continue
