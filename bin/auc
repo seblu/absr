@@ -75,8 +75,10 @@ class Softwares(object):
 		arch = value.get("arch", self.default_arch)
 		v = "(failed)"
 		try:
-			url = "http://www.archlinux.org/packages/community/%s/%s/" % (arch, name)
-			v = self.grep_url(url, "<h2>%s ([.\w]+)-[.\w]+</h2>" % name)
+			url = "http://www.archlinux.org/packages/community/%s/%s/json" % (arch, name)
+			o = urllib.request.urlopen(url)
+			d = json.loads(o.read().decode("utf-8"))
+			v = d["pkgver"]
 		except Exception as e:
 			logging.debug("Archlinux check failed for %s: %s" % (name, e))
 		return v
