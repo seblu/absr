@@ -28,6 +28,7 @@ import os
 import re
 import sys
 import urllib.request
+import urllib.error
 import xdg.BaseDirectory as BaseDirectory
 
 class Softwares(object):
@@ -82,7 +83,7 @@ class Softwares(object):
 			# list selected version
 			logging.debug("Upstream version is : %s" % v)
 			return v
-		except urllib.error.HTTPError as e:
+		except urllib.error.URLError as e:
 			logging.error("Upstream check failed for %s: %s" % (name, e))
 		return self.VersionNotFound()
 
@@ -110,7 +111,7 @@ class Softwares(object):
 					v = d["pkgver"]
 					logging.debug("Archlinux version is : %s" % v)
 					return v
-				except urllib.error.HTTPError as e:
+				except urllib.error.URLError as e:
 					logging.debug("Archlinux check failed for %s: %s" % (name, e))
 		return self.VersionNotFound()
 
@@ -125,7 +126,7 @@ class Softwares(object):
 			v = d["results"]["Version"].rsplit("-")[0]
 			logging.debug("AUR version is : %s" % v)
 			return v
-		except urllib.error.HTTPError as e:
+		except urllib.error.URLError as e:
 			logging.error("AUR check failed for %s: %s" % (name, e))
 		return self.VersionNotFound()
 
