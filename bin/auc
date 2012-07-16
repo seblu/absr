@@ -31,8 +31,6 @@ import xdg.BaseDirectory as BaseDirectory
 
 class Softwares(object):
 
-	default_arch = os.uname()[4]
-
 	def __init__(self, config):
 		self.cp = configparser.RawConfigParser()
 		# path of default config file if not given
@@ -53,6 +51,7 @@ class Softwares(object):
 
 	def get_version_upstream(self, name, value):
 		'''Return upstream version'''
+		logging.debug("Get upstream version")
 		# check upstream param
 		if "url" not in value:
 			logging.error("No url specified for %s" % name)
@@ -67,24 +66,40 @@ class Softwares(object):
 			v = self.grep_url(value["url"], regex)
 		except Exception as e:
 			logging.error("Upstream check failed for %s: %s" % (name, e))
+		logging.debug("Upstream version is : %s" % v)
 		return v
 
 	def get_version_archlinux(self, name, value):
 		'''Return archlinux version'''
+		logging.debug("Get archlinux version")
 		# check upstream param
-		arch = value.get("arch", self.default_arch)
-		v = "(failed)"
-		try:
-			url = "http://www.archlinux.org/packages/community/%s/%s/json" % (arch, name)
-			o = urllib.request.urlopen(url)
-			d = json.loads(o.read().decode("utf-8"))
-			v = d["pkgver"]
-		except Exception as e:
-			logging.debug("Archlinux check failed for %s: %s" % (name, e))
-		return v
+		# if arch is specified
+		if "arch" in value:
+			archs = (value.get["arch"],)
+		else:
+			archs = ("x86_64", "i686")
+		# if archlinux repository is specified
+		if "repo" in value:
+			repos = (value["repo"],)
+		else:
+			repos = ("testing", "community-testing", "extra", "core", "community")
+		for arch in archs:
+			for repo in repos:
+				url = "http://www.archlinux.org/packages/%s/%s/%s/json" % (repo, arch, name)
+				logging.debug("Trying url: %s" % url)
+				try:
+					o = urllib.request.urlopen(url)
+					d = json.loads(o.read().decode("utf-8"))
+					v = d["pkgver"]
+					logging.debug("Archlinux version is : %s" % v)
+					return v
+				except urllib.error.HTTPError: pass
+		logging.debug("Archlinux check failed for %s: %s" % (name, e))
+		return "(failed)"
 
 	def get_version_aur(self, name, value):
 		'''Return archlinux user repository version'''
+		logging.debug("Get AUR version")
 		v = "(failed)"
 		try:
 			url = "http://aur.archlinux.org/rpc.php?type=info&arg=%s" % (name)
@@ -93,6 +108,7 @@ class Softwares(object):
 			v = d["results"]["Version"].rsplit("-")[0]
 		except Exception as e:
 			logging.debug("AUR check failed for %s: %s" % (name, e))
+		logging.debug("AUR version is : %s" % v)
 		return v
 
 	def get_version_saved(self, name, value):
