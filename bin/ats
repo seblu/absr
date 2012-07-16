@@ -1,0 +1,55 @@
+#!/usr/bin/python
+# coding: utf-8
+
+# ats - Archlinux Tree Sync
+# Copyright © 2012 Sébastien Luttringer
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+import abs
+import argparse
+import configparser
+import distutils.version
+import urllib.request
+import logging
+import os
+import re
+import sys
+import xdg.BaseDirectory as BaseDirectory
+
+def load_parser():
+	'''Load program parser'''
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-d", "--debug", action="store_true",
+		help="debug mode")
+	parser.add_argument("-c", "--config", default=None,
+		help="config file")
+	parser.add_argument("tree", metavar="[repository[/package]]", nargs="*",
+			    help="")
+	return parser
+
+def main():
+	'''Program entry point'''
+	# parser cmdline
+	parser = load_parser()
+	args = parser.parse_args()
+	# set global debug mode
+	if args.debug:
+		logging.getLogger().setLevel(logging.DEBUG)
+
+if __name__ == '__main__':
+	main()
+
+# vim:set ai:

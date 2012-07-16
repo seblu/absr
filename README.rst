@@ -11,9 +11,17 @@ The *Archlinux* [#]_ Build System revisted?
 SOFTWARES
 =========
 
+ATS
+---
+
+*ats* (aka Archlinux Tree Sync) is a tools to sync an archlinux package tree on
+a local directory.
+
+it was previously known as abs.
+
 AUC
 ---
-*auc* is a tools which check upstream program version against archlinux version
+*auc* is a tools which check upstream program version against archlinux version.
 
 Report can be sent by mail.
 

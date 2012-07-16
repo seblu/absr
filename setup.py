@@ -11,7 +11,7 @@ setup(
     author='Sébastien Luttringer',
     license='GPL2',
     packages=['abs'],
-    scripts=['bin/abs', 'bin/auc', 'bin/aurdown'],
+    scripts=['bin/abs', 'bin/ats', 'bin/auc', 'bin/aurdown'],
     data_files=(
 	  ('/usr/share/abs/', ('README.rst', 'LICENSE', 'CHANGELOG', 'COPYRIGHT')),
       ('/usr/share/abs/samples/', ('samples/auc.conf',))
