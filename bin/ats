@@ -29,7 +29,7 @@ import re
 import sys
 import xdg.BaseDirectory as BaseDirectory
 
-def load_parser():
+def parse_argv():
     '''Load program parser'''
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="version",
@@ -40,13 +40,12 @@ def load_parser():
         help="config file")
     parser.add_argument("tree", metavar="[repository[/package]]", nargs="*",
                 help="")
-    return parser
+    return parser.parse_args()
 
 def main():
     '''Program entry point'''
     # parser cmdline
-    parser = load_parser()
-    args = parser.parse_args()
+    args = parse_argv()
     # set global debug mode
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
