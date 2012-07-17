@@ -32,6 +32,8 @@ import xdg.BaseDirectory as BaseDirectory
 def load_parser():
     '''Load program parser'''
     parser = argparse.ArgumentParser()
+    parser.add_argument("--version", action="version",
+                        version="ats version %s" % abs.version)
     parser.add_argument("-d", "--debug", action="store_true",
         help="debug mode")
     parser.add_argument("-c", "--config", default=None,

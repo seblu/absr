@@ -21,3 +21,6 @@ import logging
 
 # init ABS log systems
 logging.basicConfig(format="%(levelname)s: %(message)s")
+
+# abs version
+version = 0
