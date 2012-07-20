@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import logging
+from abs.upstreamchecker import UpstreamChecker
 
 # init ABS log systems
 logging.basicConfig(format="%(levelname)s: %(message)s")
