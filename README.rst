@@ -13,17 +13,35 @@ SOFTWARES
 
 ATS
 ---
-
-*ats* (aka Archlinux Tree Sync) is a tools to sync an archlinux package tree on
+*ats* (aka Archlinux Tree Sync) is a tool to sync an Archlinux package tree on
 a local directory.
 
 it was previously known as abs.
 
 AUC
 ---
-*auc* is a tools which check upstream program version against archlinux version.
+*auc* (aka Archlinux Upstream Checker) is a tool which check upstream program
+version against Archlinux/AUR version.
 
 Report can be sent by mail.
+
+ABD
+---
+*abd* (aka Archlinux Builder Daemon) is a tool which build new version of
+packages when they are updated.
+
+ATC
+---
+*atc* (aka Archlinux Tree Cleaner) is a tool which remove unused files in a
+package tree.
+
+AURDOWN
+-------
+*aurdown* is a tool to download source of an AUR package.
+
+PKGBUILD2JSON
+-------------
+*pkgbuild2json* is a tool which transform PKGBUILD variables into json.
 
 
 DEPENDENCIES
