@@ -42,6 +42,7 @@ AURDOWN
 PKGBUILD2JSON
 -------------
 *pkgbuild2json* is a tool which transform PKGBUILD variables into json.
+PKGBUILD file is interpreted by bash so *shell code is executed*!
 
 
 DEPENDENCIES
