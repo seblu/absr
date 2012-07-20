@@ -17,6 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+import abs.error
 import configparser
 import distutils.version
 import json
@@ -30,9 +31,6 @@ import xdg.BaseDirectory as BaseDirectory
 
 
 class UpstreamChecker(object):
-
-    class VersionNotFound(Exception):
-        pass
 
     def __init__(self, config):
         self.cp = configparser.RawConfigParser()
@@ -71,7 +69,7 @@ class UpstreamChecker(object):
             logging.debug("Version regex: %s" % regex)
             v = re.findall(regex, o.read().decode("utf-8"))
             if v is None:
-                raise self.VersionNotFound("No regex match on upstream")
+                raise abs.error.VersionNotFound("No regex match on upstream")
             # remove duplicity
             v = list(set(v))
             # list all found versions
@@ -81,7 +79,7 @@ class UpstreamChecker(object):
             logging.debug("Upstream version is : %s" % v)
             return v
         except urllib.error.URLError as e:
-            raise self.VersionNotFound("Upstream check failed for %s: %s" % (name, e))
+            raise abs.error.VersionNotFound("Upstream check failed for %s: %s" % (name, e))
         assert(False)
 
     def get_version_archlinux(self, name, value):
@@ -110,7 +108,7 @@ class UpstreamChecker(object):
                     return v
                 except urllib.error.URLError as e:
                     logging.debug("Archlinux check failed for %s: %s" % (name, e))
-        raise self.VersionNotFound("No Archlinux package found")
+        raise abs.error.VersionNotFound("No Archlinux package found")
 
     def get_version_aur(self, name, value):
         '''Return archlinux user repository version'''
@@ -124,7 +122,7 @@ class UpstreamChecker(object):
             logging.debug("AUR version is : %s" % v)
             return v
         except urllib.error.URLError as e:
-            raise self.VersionNotFound("AUR check failed for %s: %s" % (name, e))
+            raise abs.error.VersionNotFound("AUR check failed for %s: %s" % (name, e))
         assert(False)
 
     def get_version_saved(self, name, value):
@@ -164,7 +162,7 @@ class UpstreamChecker(object):
                         continue
                     v2 = None
                 self.print_version(name, v1, v2)
-            except self.VersionNotFound as e:
+            except abs.error.VersionNotFound as e:
                 logging.error("%s: Unable to get version: %s" % (name, e))
 
     def print_version(self, name, v1, v2):

@@ -51,7 +51,8 @@ def main():
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
     # Load software checking object
-    soft = abs.UpstreamChecker(args.config)
+    from abs.upstreamchecker import UpstreamChecker
+    soft = UpstreamChecker(args.config)
     if args.list == True:
         soft.print_names(args.soft)
     else:

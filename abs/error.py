@@ -17,10 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-import logging
+class AbsError(Exception):
+    pass
 
-# init ABS log systems
-logging.basicConfig(format="%(levelname)s: %(message)s")
+class VersionNotFound(AbsError):
+    pass
 
-# abs version
-version = 0
+# vim:set ts=4 sw=4 et ai:
