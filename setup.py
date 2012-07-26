@@ -14,7 +14,7 @@ setup(
     scripts=['bin/ats', 'bin/atc', 'bin/avc', 'bin/aurdown', 'bin/pkgbuild2json'],
     data_files=(
 	  ('/usr/share/abs/', ('README.rst', 'LICENSE', 'CHANGELOG', 'COPYRIGHT')),
-      ('/usr/share/abs/samples/', ('samples/avc.conf',))
+      ('/usr/share/abs/samples/', ('samples/avc.conf', 'samples/ats.conf'))
     ),
     classifiers=[
         'Operating System :: Unix',
