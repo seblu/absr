@@ -27,7 +27,7 @@ Report can be sent by mail.
 
 ABD
 ---
-*abd* (aka Archlinux Builder Daemon) is a tool which build new version of
+*abd* (aka Archlinux Build Daemon) is a tool which build new version of
 packages when they are updated.
 
 ATC
