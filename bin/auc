@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-from abs.config import PackagesConfigFile
+from abs.config import BaseConfigFile
 from abs.controller import VersionController
 import abs
 import abs.error
@@ -55,7 +55,7 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
     # Load configuration
     try:
-        packages = PackagesConfigFile(args.config, "auc.conf").packages
+        packages = BaseConfigFile(args.config, "auc.conf").config
     except abs.error.MissingConfigFile:
         logging.error("Configuration file is missing. "
                       "Please create it before")

@@ -18,7 +18,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+from abs.config import BaseConfigFile
 import abs
+import abs.error
 import argparse
 import configparser
 import distutils.version
@@ -26,8 +28,6 @@ import urllib.request
 import logging
 import os
 import re
-import sys
-import xdg.BaseDirectory as BaseDirectory
 
 def parse_argv():
     '''Load program parser'''
@@ -49,6 +49,13 @@ def main():
     # set global debug mode
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
+    # Load configuration
+    try:
+        packages = BaseConfigFile(args.config, "ats.conf").packages
+    except abs.error.MissingConfigFile:
+        logging.error("Configuration file is missing. "
+                      "Please create it before")
+        exit(abs.error.ERR_FATAL)
 
 if __name__ == '__main__':
     main()

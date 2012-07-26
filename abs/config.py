@@ -23,7 +23,7 @@ import logging
 import os
 import xdg.BaseDirectory as basedirectory
 
-class AbsConfig(object):
+class BaseConfigFile(object):
     '''Base ABS config file'''
 
     def __init__(self, path, filename):
@@ -32,34 +32,17 @@ class AbsConfig(object):
             self.path = basedirectory.load_first_config("abs", filename)
         else:
             self.path = path
-        logging.debug("initialized config file path is: %s" % self.path)
         if not isinstance(self.path, str) or not os.path.exists(self.path):
+            logging.debug("No such config file: %s" % self.path)
             raise abs.error.MissingConfigFile()
         self.load()
 
     def load(self):
-        '''Load configuration if exists or create an empty one'''
-        raise NotImplemented()
-
-
-class PackagesConfigFile(AbsConfig):
-    '''
-    This class load an INI file
-
-    Each section is a package name
-    '''
-
-    def load(self):
         '''Load configuration'''
-        logging.debug("loading packages file at: %s" % self.path)
+        logging.debug("loading config file at: %s" % self.path)
         # FIXME: use an ordereddict?
         self._configparser = RawConfigParser()
-        # open config file
-        try:
-            self._configparser.read(self.path)
-        except IOError as e:
-            logging.error("Unable to open %s: %s" % (self.path, e))
-            raise abs.error.ConfigFileError(e)
-        self.packages = {}
+        self._configparser.read(self.path)
+        self.config = {}
         for name in sorted(self._configparser.sections()):
-            self.packages[name] = dict(self._configparser.items(name))
+            self.config[name] = dict(self._configparser.items(name))
