@@ -18,10 +18,10 @@ a local directory.
 
 it was previously known as abs.
 
-AUC
+AVC
 ---
-*auc* (aka Archlinux Upstream Checker) is a tool which check upstream program
-version against Archlinux/AUR version.
+*avc* (aka Archlinux Version Checker) is a tool which check upstream packages
+versions against Archlinux/AUR versions.
 
 Report can be sent by mail.
 

@@ -11,10 +11,10 @@ setup(
     author='Sébastien Luttringer',
     license='GPL2',
     packages=['abs'],
-    scripts=['bin/ats', 'bin/atc', 'bin/auc', 'bin/aurdown', 'bin/pkgbuild2json'],
+    scripts=['bin/ats', 'bin/atc', 'bin/avc', 'bin/aurdown', 'bin/pkgbuild2json'],
     data_files=(
 	  ('/usr/share/abs/', ('README.rst', 'LICENSE', 'CHANGELOG', 'COPYRIGHT')),
-      ('/usr/share/abs/samples/', ('samples/auc.conf',))
+      ('/usr/share/abs/samples/', ('samples/avc.conf',))
     ),
     classifiers=[
         'Operating System :: Unix',

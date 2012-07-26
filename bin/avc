@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 
-# auc - Archlinux Upstream Checker
+# avc - Archlinux Version Checker
 # Copyright © 2012 Sébastien Luttringer
 #
 # This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ def parse_argv():
     '''Parse command line arguments'''
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="version",
-                        version="auc version %s" % abs.version)
+                        version="avc version %s" % abs.version)
     parser.add_argument("-d", "--debug", action="store_true",
         help="debug mode")
     parser.add_argument("-D", "--diff", action="store_true",
@@ -55,7 +55,7 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
     # Load configuration
     try:
-        packages = BaseConfigFile(args.config, "auc.conf").config
+        packages = BaseConfigFile(args.config, "avc.conf").config
     except abs.error.MissingConfigFile:
         logging.error("Configuration file is missing. "
                       "Please create it before")
