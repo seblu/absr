@@ -18,6 +18,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+from abs.config import PackagesConfigFile
+from abs.controller import VersionController
 import abs
 import abs.error
 import argparse
@@ -53,7 +55,6 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
     # Load configuration
     try:
-        from abs.config import PackagesConfigFile
         packages = PackagesConfigFile(args.config, "auc.conf").packages
     except abs.error.MissingConfigFile:
         logging.error("Configuration file is missing. "
@@ -65,7 +66,6 @@ def main():
             if pkg not in args.packages:
                 del packages[pkg]
     # Load package checking object
-    from abs.versioncontroller import VersionController
     soft = VersionController(packages)
     if args.list == True:
         soft.print_names()

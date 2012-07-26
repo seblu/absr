@@ -39,12 +39,12 @@ def parse_argv():
     parser.add_argument("-c", "--config", default=None,
         help="config file")
     parser.add_argument("tree", metavar="[repository[/package]]", nargs="*",
-                help="")
+        help="")
     return parser.parse_args()
 
 def main():
     '''Program entry point'''
-    # parser cmdline
+    # parser command line
     args = parse_argv()
     # set global debug mode
     if args.debug:
