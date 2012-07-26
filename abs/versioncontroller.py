@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import abs.error
+import abs.config
 import configparser
 import distutils.version
 import json
@@ -27,28 +28,15 @@ import re
 import sys
 import urllib.error
 import urllib.request
-import xdg.BaseDirectory as BaseDirectory
 
 
-class UpstreamChecker(object):
+class VersionController(object):
+    '''
+    Handle version detection of packages
+    '''
 
-    def __init__(self, config):
-        self.cp = configparser.RawConfigParser()
-        # path of default config file if not given
-        if config is None:
-            config = os.path.join(BaseDirectory.save_config_path("auc"), "config")
-        # open config file
-        try:
-            self.cp.read(config)
-        except IOError as e:
-            exit("Unable to open %s: %s" % (config, e))
-
-    def softwares_generator(self, softwares=None):
-        if softwares is None:
-            softwares = sorted(self.cp.sections())
-        for name in softwares:
-            d = dict(self.cp.items(name))
-            yield (name, d)
+    def __init__(self, packages):
+        self.packages = packages
 
     def get_version_upstream(self, name, value):
         '''Return upstream version'''
@@ -129,13 +117,13 @@ class UpstreamChecker(object):
         '''Return local saved version'''
         raise NotImplemented()
 
-    def print_names(self, softwares=None):
-        for name, value in self.softwares_generator(softwares):
+    def print_names(self):
+        for name, value in self.packages.items():
             print(name)
 
-    def print_versions(self, softwares=None, only_diff=False):
+    def print_versions(self, only_diff=False):
         '''Print last version of registered software'''
-        for name, value in self.softwares_generator(softwares):
+        for name, value in self.packages.items():
             # get compare mode
             compare = value.get("compare", "archlinux")
             try:

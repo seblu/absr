@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 import abs
+import abs.error
 import argparse
 import logging
 
@@ -32,9 +33,9 @@ def parse_argv():
     parser.add_argument("-D", "--diff", action="store_true",
         help="display only different version")
     parser.add_argument("-l", "--list", action="store_true",
-        help="list registered software")
-    parser.add_argument("-s", "--soft", nargs='+', default=None,
-        help="only check listed software")
+        help="list registered packages")
+    parser.add_argument("-p", "--packages", nargs='+', default=None,
+        help="only check listed packages")
     parser.add_argument("-S", "--no-save", action="store_true",
         help="doesn't save polling result")
     parser.add_argument("-b", "--database", default=None,
@@ -45,18 +46,31 @@ def parse_argv():
 
 def main():
     '''Program entry point'''
-    # parser cmdline
+    # parse command line
     args = parse_argv()
     # set global debug mode
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    # Load software checking object
-    from abs.upstreamchecker import UpstreamChecker
-    soft = UpstreamChecker(args.config)
+    # Load configuration
+    try:
+        from abs.config import PackagesConfigFile
+        packages = PackagesConfigFile(args.config, "auc.conf").packages
+    except abs.error.MissingConfigFile:
+        logging.error("Configuration file is missing. "
+                      "Please create it before")
+        exit(abs.error.ERR_FATAL)
+    # filter packages
+    if args.packages is not None:
+        for pkg in list(packages):
+            if pkg not in args.packages:
+                del packages[pkg]
+    # Load package checking object
+    from abs.versioncontroller import VersionController
+    soft = VersionController(packages)
     if args.list == True:
-        soft.print_names(args.soft)
+        soft.print_names()
     else:
-        soft.print_versions(args.soft, only_diff=args.diff)
+        soft.print_versions(only_diff=args.diff)
     if not args.no_save:
         soft.save(args.database)
     return True
