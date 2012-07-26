@@ -18,6 +18,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+'''Transform PKGBUILD into JSON'''
+
 import abs
 import argparse
 import json
@@ -41,21 +43,22 @@ def pkgbuild2json(path):
     # check PKGBUILD can be openned
     try:
         open(path, "r")
-    except IOError as e:
-        logging.error("Unable to open %s" % args.PKGBUILD)
+    except IOError as exp:
+        errmsg = "Unable to open %s: %s" % (path, exp)
+        logging.error(errmsg)
         exit(1)
     # use bash to export vars.
     # WARNING: CODE IS EXECUTED
     argv = ["bash", "-c",
             "set -a; source '%s'; exec '%s' --env" % (path, sys.argv[0])]
-    sp = subprocess.Popen(argv, stdout=subprocess.PIPE, shell=False)
-    stdout, stderr = sp.communicate("")
-    sp.wait()
-    js = json.loads(stdout.decode())
+    proc = subprocess.Popen(argv, stdout=subprocess.PIPE, shell=False)
+    stdout = proc.communicate("")[0]
+    proc.wait()
+    jpkgbuild = json.loads(stdout.decode())
     # remove original env variables
     for i in os.environ.keys():
-        js.pop(i, "")
-    return json.dumps(js)
+        jpkgbuild.pop(i, "")
+    return json.dumps(jpkgbuild)
 
 def main():
     '''Program entry point'''

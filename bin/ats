@@ -18,16 +18,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+'''Archlinux Tree Sync'''
+
 from abs.config import BaseConfigFile
 import abs
 import abs.error
 import argparse
-import configparser
-import distutils.version
-import urllib.request
 import logging
-import os
-import re
 
 def parse_argv():
     '''Load program parser'''
@@ -51,11 +48,12 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
     # Load configuration
     try:
-        packages = BaseConfigFile(args.config, "ats.conf").packages
+        repos = BaseConfigFile(args.config, "ats.conf").config
     except abs.error.MissingConfigFile:
         logging.error("Configuration file is missing. "
-                      "Please create it before")
+                      "Please create it before!")
         exit(abs.error.ERR_FATAL)
+    print(repos)
 
 if __name__ == '__main__':
     main()

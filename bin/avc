@@ -18,6 +18,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+'''Archlinux Version Checker'''
+
 from abs.config import BaseConfigFile
 from abs.controller import VersionController
 import abs
@@ -58,7 +60,7 @@ def main():
         packages = BaseConfigFile(args.config, "avc.conf").config
     except abs.error.MissingConfigFile:
         logging.error("Configuration file is missing. "
-                      "Please create it before")
+                      "Please create it before!")
         exit(abs.error.ERR_FATAL)
     # filter packages
     if args.packages is not None:
