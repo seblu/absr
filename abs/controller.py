@@ -35,6 +35,8 @@ class VersionController(object):
     Handle version detection of packages
     '''
 
+    AUR_RPC = "http://aur.archlinux.org/rpc.php"
+
     def __init__(self, packages):
         self.packages = packages
 
@@ -102,7 +104,7 @@ class VersionController(object):
         '''Return archlinux user repository version'''
         logging.debug("Get AUR version")
         try:
-            url = "http://aur.archlinux.org/rpc.php?type=info&arg=%s" % (name)
+            url = "%s?type=info&arg=%s" % (self.AUR_RPC, name)
             logging.debug("Requesting url: %s" % url)
             o = urllib.request.urlopen(url)
             d = json.loads(o.read().decode("utf-8"))
