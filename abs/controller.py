@@ -88,15 +88,11 @@ class VersionController(object):
         logging.debug("Get archlinux version")
         # check upstream param
         # if arch is specified
-        if "arch" in value:
-            archs = (value.get["arch"],)
-        else:
-            archs = ("x86_64", "i686", "any")
+        archs = value.get("arch", "x86_64,i686,any").split(",")
         # if archlinux repository is specified
-        if "repo" in value:
-            repos = (value["repo"],)
-        else:
-            repos = ("community-testing", "community", "testing", "extra", "core")
+        repos = value.get("repo",
+                          "community-testing,community,testing,extra,core"
+                          ).split(",")
         for arch in archs:
             for repo in repos:
                 url = "http://www.archlinux.org/packages/%s/%s/%s/json" % (repo, arch, name)
