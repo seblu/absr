@@ -49,7 +49,7 @@ class JsonDatabase(dict):
         assert(default_filename is not None)
         # find the right path
         path = self._get_path(path, default_filename)
-        if path is not None:
+        if path is not None and os.path.isfile(path):
             logging.debug("Loading database %s" % path)
             try:
                 fileobj = open(path, "r")
