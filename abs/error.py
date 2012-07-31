@@ -20,15 +20,15 @@
 ERR_USAGE = 1
 ERR_FATAL = 2
 
-class AbsError(Exception):
+class BaseError(Exception):
     '''ABS errors base class'''
     pass
 
-class VersionNotFound(AbsError):
+class VersionNotFound(BaseError):
     '''Version of a package is not found'''
     pass
 
-class ConfigFileError(AbsError):
+class ConfigFileError(BaseError):
     '''All errors related to config file '''
     pass
 
