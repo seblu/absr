@@ -124,8 +124,9 @@ class VersionController(object):
 
     def get_version_cache(self, name, value):
         '''Return cache version'''
-        logging.debug("Get cache version")
-        return self.cache.get(name, None)
+        v_cache = self.cache.get(name, None)
+        logging.debug("Cache version is : %s" % v_cache)
+        return v_cache
 
     def get_version_none(self, name, value):
         '''Return cache version'''
@@ -148,6 +149,15 @@ class VersionController(object):
                 if e_upstream is not None:
                     v_upstream = eval(e_upstream, {}, {"version": v_upstream})
                     logging.debug("eval_upstream produce version: %s" % v_upstream)
+                # check upstream validity
+                if v_upstream is None:
+                    raise abs.error.VersionNotFound("Upstream")
+                # get cached version
+                v_cache = self.cache.get(name, None)
+                # only not in cache mode
+                if not_in_cache and v_cache == v_upstream:
+                    logging.debug("%s: skipped by not in cache mode" % name)
+                    continue
                 # get compared version
                 v_compare = self.compare_table[compare](name, value)
                 # apply eval to compared
@@ -155,22 +165,13 @@ class VersionController(object):
                 if e_compare is not None:
                     v_compare = eval(e_compare, {}, {"version": v_compare})
                     logging.debug("eval_compare produce version: %s" % v_compare)
-                # gef cached version
-                v_cache = self.cache.get(name, None)
                 # save version to cache
                 # after getting compared version (avoid interfering with cache mode)
-                if v_upstream is not None:
-                    self.cache[name] = v_upstream
+                self.cache[name] = v_upstream
                 # only new version mode
                 if only_new and (v_compare is None or v_upstream == v_compare):
                     logging.debug("%s: skipped by only new mode" % name)
                     continue
-                # only not in cache mode
-                if not_in_cache and v_cache == v_upstream:
-                    logging.debug("%s: skipped by not in cache mode" % name)
-                    continue
-                # write result in cache
-                self.cache[name] = v_upstream
                 yield (name, v_upstream, v_compare)
             except abs.error.VersionNotFound as e:
                 logging.warning("%s: Version not found: %s" % (name, e))
