@@ -29,7 +29,6 @@ import sys
 import urllib.error
 import urllib.request
 
-
 class VersionController(object):
     '''
     Handle version detection of packages
@@ -37,8 +36,20 @@ class VersionController(object):
 
     AUR_RPC = "http://aur.archlinux.org/rpc.php"
 
-    def __init__(self, packages):
+    def __init__(self, packages, cache):
         self.packages = packages
+        # set cache
+        if cache is None:
+            cache = {}
+        self.cache = cache
+        # populate compare table
+        # need to be done manually to avoid get_upstream to be in
+        self.compare_table = {
+            "archlinux": self.get_version_archlinux,
+            "aur": self.get_version_aur,
+            "cache": self.get_version_cache,
+            "none": self.get_version_none
+            }
 
     def get_version_upstream(self, name, value):
         '''Return upstream version'''
@@ -46,7 +57,7 @@ class VersionController(object):
         # check upstream param
         if "url" not in value:
             logging.error("No url specified for %s" % name)
-            raise NameError("Missing url in config file")
+            raise abs.error.InvalidConfigFile("Missing url in config file")
         url = value["url"]
         regex = value.get("regex", "%s[-_]v?(%s)%s" % (
                     value.get("regex_name", name),
@@ -68,8 +79,8 @@ class VersionController(object):
             # list selected version
             logging.debug("Upstream version is : %s" % v)
             return v
-        except urllib.error.URLError as e:
-            raise abs.error.VersionNotFound("Upstream check failed for %s: %s" % (name, e))
+        except Exception as e:
+            raise abs.error.VersionNotFound("Upstream check failed: %s" % e)
         assert(False)
 
     def get_version_archlinux(self, name, value):
@@ -96,8 +107,8 @@ class VersionController(object):
                     v = d["pkgver"]
                     logging.debug("Archlinux version is : %s" % v)
                     return v
-                except urllib.error.URLError as e:
-                    logging.debug("Archlinux check failed for %s: %s" % (name, e))
+                except Exception as e:
+                    logging.debug("Archlinux check failed: %s" % e)
         raise abs.error.VersionNotFound("No Archlinux package found")
 
     def get_version_aur(self, name, value):
@@ -111,49 +122,84 @@ class VersionController(object):
             v = d["results"]["Version"].rsplit("-")[0]
             logging.debug("AUR version is : %s" % v)
             return v
-        except urllib.error.URLError as e:
-            raise abs.error.VersionNotFound("AUR check failed for %s: %s" % (name, e))
+        except Exception as e:
+            raise abs.error.VersionNotFound("AUR check failed: %s" % e)
         assert(False)
 
-    def get_version_saved(self, name, value):
-        '''Return local saved version'''
-        raise NotImplemented()
+    def get_version_cache(self, name, value):
+        '''Return cache version'''
+        logging.debug("Get cache version")
+        return self.cache.get(name, None)
+
+    def get_version_none(self, name, value):
+        '''Return cache version'''
+        return None
+
+    def check_versions(self, only_new=False, not_in_cache=False):
+        '''Check versions against according to compare mode'''
+        for name, value in self.packages.items():
+            try:
+                # get compare mode
+                compare = value.get("compare", None)
+                if compare is None:
+                    raise abs.error.InvalidConfigFile("No defined compare mode")
+                if compare not in self.compare_table:
+                    raise abs.error.InvalidConfigFile("Invalid compare mode")
+                # get upstream version
+                v_upstream = self.get_version_upstream(name, value)
+                # apply eval to upstream
+                e_upstream = value.get("eval_upstream", None)
+                if e_upstream is not None:
+                    v_upstream = eval(e_upstream, {}, {"version": v_upstream})
+                    logging.debug("eval_upstream produce version: %s" % v_upstream)
+                # get compared version
+                v_compare = self.compare_table[compare](name, value)
+                # apply eval to compared
+                e_compare = value.get("eval_compare", None)
+                if e_compare is not None:
+                    v_compare = eval(e_compare, {}, {"version": v_compare})
+                    logging.debug("eval_compare produce version: %s" % v_compare)
+                # gef cached version
+                v_cache = self.cache.get(name, None)
+                # save version to cache
+                # after getting compared version (avoid interfering with cache mode)
+                if v_upstream is not None:
+                    self.cache[name] = v_upstream
+                # only new version mode
+                if only_new and (v_compare is None or v_upstream == v_compare):
+                    logging.debug("%s: skipped by only new mode" % name)
+                    continue
+                # only not in cache mode
+                if not_in_cache and v_cache == v_upstream:
+                    logging.debug("%s: skipped by not in cache mode" % name)
+                    continue
+                # write result in cache
+                self.cache[name] = v_upstream
+                yield (name, v_upstream, v_compare)
+            except abs.error.VersionNotFound as e:
+                logging.warning("%s: Version not found: %s" % (name, e))
+            except abs.error.ConfigFileError as e:
+                logging.warning("%s: Invalid configuration: %s" % (name, e))
 
     def print_names(self):
-        for name, value in self.packages.items():
+        '''Print packages name'''
+        for name in self.packages.keys():
             print(name)
 
-    def print_versions(self, only_diff=False):
-        '''Print last version of registered software'''
-        for name, value in self.packages.items():
-            # get compare mode
-            compare = value.get("compare", "archlinux")
-            try:
-                # upstream version
-                v1 = self.get_version_upstream(name, value)
-                if compare == "archlinux":
-                    # compare with archlinux pkg
-                    v2 = self.get_version_archlinux(name, value)
-                    v1 = v1.replace("-", "_")
-                    if only_diff and v1 == v2:
-                        continue
-                elif compare == "aur":
-                    v2 = self.get_version_aur(name, value)
-                    v1 = v1.replace("-", "_")
-                    if only_diff and v1 == v2:
-                        continue
-                elif compare == "saved":
-                    # compare with saved database
-                    raise NotImplemented()
-                else:
-                    # no comparaison
-                    # so no print if only_diff
-                    if only_diff:
-                        continue
-                    v2 = None
-                self.print_version(name, v1, v2)
-            except abs.error.VersionNotFound as e:
-                logging.error("%s: Unable to get version: %s" % (name, e))
+    def print_cache(self):
+        '''Print cache name and version'''
+        for name, version in self.cache.items():
+            print(name, ":", version)
+
+    def print_modes(self):
+        '''Print comparaison modes'''
+        for name in sorted(self.compare_table.keys()):
+            print(name)
+
+    def print_versions(self, only_new=False, not_in_cache=False):
+        '''Print versions'''
+        for name, v_upstream, v_compare in self.check_versions(only_new, not_in_cache):
+            self.print_version(name, v_upstream, v_compare)
 
     def print_version(self, name, v1, v2):
         if sys.stdout.isatty():

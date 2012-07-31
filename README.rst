@@ -23,6 +23,10 @@ AVC
 *avc* (aka Archlinux Version Checker) is a tool which check upstream packages
 versions against Archlinux/AUR versions.
 
+*avc -d* will only display version which differ with cache.
+*avc -n* will only display new verions.
+*avc -nd* will display new version not in cache (useful for mail report).
+
 Report can be sent by mail.
 
 ABD

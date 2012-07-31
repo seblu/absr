@@ -22,6 +22,7 @@
 
 from abs.config import BaseConfigFile
 from abs.controller import VersionController
+from abs.database import JsonDatabase
 import abs
 import abs.error
 import argparse
@@ -32,20 +33,27 @@ def parse_argv():
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="version",
                         version="avc version %s" % abs.version)
-    parser.add_argument("-d", "--debug", action="store_true",
-        help="debug mode")
-    parser.add_argument("-D", "--diff", action="store_true",
-        help="display only different version")
-    parser.add_argument("-l", "--list", action="store_true",
-        help="list registered packages")
-    parser.add_argument("-p", "--packages", nargs='+', default=None,
-        help="only check listed packages")
-    parser.add_argument("-S", "--no-save", action="store_true",
-        help="doesn't save polling result")
-    parser.add_argument("-b", "--database", default=None,
-        help="database file with saved polling")
+    parser.add_argument("--debug", action="store_true",
+                        help="debug mode")
     parser.add_argument("-c", "--config", default=None,
-        help="config file with url to check")
+                        help="config file with url to check")
+    parser.add_argument("-C", "--cache", default=None,
+                        help="cache file with saved package and version")
+    parser.add_argument("-d", "--diff-cache", action="store_true",
+                        help="display version not in cache")
+    parser.add_argument("-n", "--diff-new", action="store_true",
+                        help="display only new versions")
+    parser.add_argument("-p", "--packages", nargs='+', default=None,
+                        help="only check listed packages")
+    parser.add_argument("-S", "--no-cache", action="store_true",
+                        help="don't save version in cache")
+    actiongroup = parser.add_mutually_exclusive_group()
+    actiongroup.add_argument("-l", "--list", action="store_true",
+                             help="list registered packages")
+    actiongroup.add_argument("-L", "--list-cache", action="store_true",
+                             help="list cached packages and versions")
+    actiongroup.add_argument("--compare-modes", action="store_true",
+                             help="display comparaison modes")
     return parser.parse_args()
 
 def main():
@@ -55,26 +63,35 @@ def main():
     # set global debug mode
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    # Load configuration
+    # load configuration
     try:
         packages = BaseConfigFile(args.config, "avc.conf").config
     except abs.error.MissingConfigFile:
         logging.error("Configuration file is missing. "
                       "Please create it before!")
         exit(abs.error.ERR_FATAL)
+    # load version database
+    cachedb = JsonDatabase()
+    cachedb.load(args.cache, "avc.db")
     # filter packages
     if args.packages is not None:
         for pkg in list(packages):
             if pkg not in args.packages:
                 del packages[pkg]
-    # Load package checking object
-    soft = VersionController(packages)
+    # load checking controller
+    vctrl = VersionController(packages, cachedb)
+    # call the right action
     if args.list == True:
-        soft.print_names()
+        vctrl.print_names()
+    elif args.list_cache:
+        vctrl.print_cache()
+    elif args.compare_modes:
+        vctrl.print_modes()
     else:
-        soft.print_versions(only_diff=args.diff)
-    if not args.no_save:
-        soft.save(args.database)
+        vctrl.print_versions(args.diff_new, args.diff_cache)
+    # save version database
+    if not args.no_cache:
+        cachedb.save(args.cache, "avc.db")
     return True
 
 if __name__ == '__main__':
