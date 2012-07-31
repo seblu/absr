@@ -26,12 +26,12 @@ import xdg.BaseDirectory as basedirectory
 class BaseConfigFile(object):
     '''Base ABS config file'''
 
-    def __init__(self, path, filename):
+    def __init__(self, path, default_filename):
         '''Initialize config object'''
+        assert(default_filename is not None)
+        self.path = path
         if path is None:
-            self.path = basedirectory.load_first_config("abs", filename)
-        else:
-            self.path = path
+            self.path = basedirectory.load_first_config("abs", default_filename)
         if not isinstance(self.path, str) or not os.path.exists(self.path):
             logging.debug("No such config file: %s" % self.path)
             raise abs.error.MissingConfigFile()
