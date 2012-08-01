@@ -19,6 +19,8 @@
 
 ERR_USAGE = 1
 ERR_FATAL = 2
+ERR_ABORT = 3
+ERR_UNKNOWN = 4
 
 class BaseError(Exception):
     '''ABS errors base class'''

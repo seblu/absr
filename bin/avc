@@ -20,11 +20,13 @@
 
 '''Archlinux Version Checker'''
 
+
 from abs.config import BaseConfigFile
 from abs.controller import VersionController
 from abs.database import JsonDatabase
+from abs.error import BaseError, MissingConfigFile
+from abs.error import ERR_FATAL, ERR_ABORT, ERR_UNKNOWN
 from abs import VERSION
-import abs.error
 import argparse
 import logging
 
@@ -65,10 +67,12 @@ def command_check(args, vctrl):
     # filter packages
     for pkg in list(args.packages):
         vctrl.packages.pop(pkg, None)
-    vctrl.print_versions(args.diff_new, args.diff_cache)
-    # save version database
-    if not args.no_cache:
-        vctrl.cache.save(args.cache, "avc.db")
+    try:
+        vctrl.print_versions(args.diff_new, args.diff_cache)
+    finally:
+        # save version database
+        if not args.no_cache:
+            vctrl.cache.save(args.cache, "avc.db")
 
 def command_list(args, vctrl):
     '''Handle list command call'''
@@ -82,25 +86,31 @@ def command_list(args, vctrl):
 
 def main():
     '''Program entry point'''
-    # parse command line
-    args = parse_argv()
-    # set global debug mode
-    if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    # load configuration
     try:
+        # parse command line
+        args = parse_argv()
+        # set global debug mode
+        if args.debug:
+            logging.getLogger().setLevel(logging.DEBUG)
+        # load configuration
         packages = BaseConfigFile(args.config, "avc.conf").config
-    except abs.error.MissingConfigFile:
+        # load cache database
+        cachedb = JsonDatabase()
+        cachedb.load(args.cache, "avc.db")
+        # load checking controller
+        vctrl = VersionController(packages, cachedb)
+        # call command function
+        return args.func(args, vctrl)
+    except KeyboardInterrupt:
+        exit(ERR_ABORT)
+    except MissingConfigFile:
         logging.error("Configuration file is missing. "
                       "Please create it before!")
-        exit(abs.error.ERR_FATAL)
-    # load cache database
-    cachedb = JsonDatabase()
-    cachedb.load(args.cache, "avc.db")
-    # load checking controller
-    vctrl = VersionController(packages, cachedb)
-    # call command function
-    return args.func(args, vctrl)
+        exit(ERR_FATAL)
+    except BaseError as e:
+        logging.error("Unknown error. Please report it.")
+        logging.error(e)
+        exit(ERR_FATAL)
 
 if __name__ == '__main__':
     main()
