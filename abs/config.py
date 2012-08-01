@@ -17,6 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+from collections import OrderedDict
 from configparser import RawConfigParser
 import abs.error
 import logging
@@ -43,6 +44,6 @@ class BaseConfigFile(object):
         # FIXME: use an ordereddict?
         self._configparser = RawConfigParser()
         self._configparser.read(self.path)
-        self.config = {}
-        for name in sorted(self._configparser.sections()):
-            self.config[name] = dict(self._configparser.items(name))
+        self.config = OrderedDict()
+        for name in self._configparser.sections():
+            self.config[name] = OrderedDict(self._configparser.items(name))
