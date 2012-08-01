@@ -30,6 +30,9 @@ from abs import VERSION
 import argparse
 import logging
 
+CONFIG_FILENAME = "avc.conf"
+CACHE_FILENAME = "avc.json"
+
 def parse_argv():
     '''Parse command line arguments'''
     p_main = argparse.ArgumentParser()
@@ -44,14 +47,14 @@ def parse_argv():
     sp_main = p_main.add_subparsers()
     # check parser
     p_check = sp_main.add_parser("check", help="check packages versions")
-    p_check.add_argument("packages", nargs='*', default=[],
-                         help="only check this packages")
     p_check.add_argument("-c", "--diff-cache", action="store_true",
                          help="doesn't display cached versions")
     p_check.add_argument("-n", "--diff-new", action="store_true",
                          help="only display new versions")
     p_check.add_argument("-S", "--no-cache", action="store_true",
                          help="don't save version in cache")
+    p_check.add_argument("packages", nargs='*',
+                         help="only check this packages")
     p_check.set_defaults(func=command_check)
     # list parser
     p_list = sp_main.add_parser("list", help="list various informations")
@@ -65,14 +68,16 @@ def parse_argv():
 def command_check(args, vctrl):
     '''Handle check command call'''
     # filter packages
-    for pkg in list(args.packages):
-        vctrl.packages.pop(pkg, None)
+    if len(args.packages) > 0:
+        for pkg in list(vctrl.packages):
+            if pkg not in args.packages:
+                vctrl.packages.pop(pkg, None)
     try:
         vctrl.print_versions(args.diff_new, args.diff_cache)
     finally:
         # save version database
         if not args.no_cache:
-            vctrl.cache.save(args.cache, "avc.db")
+            vctrl.cache.save(args.cache, CACHE_FILENAME)
 
 def command_list(args, vctrl):
     '''Handle list command call'''
@@ -93,10 +98,10 @@ def main():
         if args.debug:
             logging.getLogger().setLevel(logging.DEBUG)
         # load configuration
-        packages = BaseConfigFile(args.config, "avc.conf").config
+        packages = BaseConfigFile(args.config, CONFIG_FILENAME).config
         # load cache database
         cachedb = JsonDatabase()
-        cachedb.load(args.cache, "avc.db")
+        cachedb.load(args.cache, CACHE_FILENAME)
         # load checking controller
         vctrl = VersionController(packages, cachedb)
         # call command function

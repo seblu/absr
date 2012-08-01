@@ -63,7 +63,7 @@ class JsonDatabase(dict):
         '''Save current version database into a file'''
         assert(default_filename is not None)
         if not save_empty and len(self) == 0:
-            logging.debug("Not really saved. Database is empty")
+            logging.debug("Not saved. Database is empty")
             return
         # find the right path
         path = self._get_path(path, default_filename, create=True)
