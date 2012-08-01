@@ -63,10 +63,13 @@ class VersionController(object):
                     value.get("regex_name", name),
                     value.get("regex_version", "[-.\w]+"),
                     value.get("regex_ext", "\.(?:tar(?:\.gz|\.bz2|\.xz)?|tgz|tbz2|zip)")))
+        # retrieve config timeout
+        timeout = float(value.get("timeout", None))
         # do the job
         try:
             logging.debug("Requesting url: %s" % url)
-            o = urllib.request.urlopen(url)
+            logging.debug("Timeout is %f" % timeout)
+            o = urllib.request.urlopen(url, timeout=timeout)
             logging.debug("Version regex: %s" % regex)
             v = re.findall(regex, o.read().decode("utf-8"))
             if v is None:
@@ -86,19 +89,21 @@ class VersionController(object):
     def get_version_archlinux(self, name, value):
         '''Return archlinux version'''
         logging.debug("Get archlinux version")
-        # check upstream param
         # if arch is specified
         archs = value.get("arch", "x86_64,i686,any").split(",")
         # if archlinux repository is specified
         repos = value.get("repo",
                           "community-testing,community,testing,extra,core"
                           ).split(",")
+        # retrieve config timeout
+        timeout = float(value.get("timeout", None))
         for arch in archs:
             for repo in repos:
                 url = "http://www.archlinux.org/packages/%s/%s/%s/json" % (repo, arch, name)
                 logging.debug("Requesting url: %s" % url)
+                logging.debug("Timeout is %f" % timeout)
                 try:
-                    o = urllib.request.urlopen(url)
+                    o = urllib.request.urlopen(url, timeout=timeout)
                     d = json.loads(o.read().decode("utf-8"))
                     v = d["pkgver"]
                     logging.debug("Archlinux version is : %s" % v)
@@ -111,9 +116,12 @@ class VersionController(object):
         '''Return archlinux user repository version'''
         logging.debug("Get AUR version")
         try:
+            # retrieve config timeout
+            timeout = float(value.get("timeout", None))
             url = "%s?type=info&arg=%s" % (self.AUR_RPC, name)
             logging.debug("Requesting url: %s" % url)
-            o = urllib.request.urlopen(url)
+            logging.debug("Timeout is %f" % timeout)
+            o = urllib.request.urlopen(url, timeout=timeout)
             d = json.loads(o.read().decode("utf-8"))
             v = d["results"]["Version"].rsplit("-")[0]
             logging.debug("AUR version is : %s" % v)
