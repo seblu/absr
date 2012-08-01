@@ -20,8 +20,8 @@
 
 '''Archlinux Tree Sync'''
 
+from abs import VERSION
 from abs.config import BaseConfigFile
-import abs
 import abs.error
 import argparse
 import logging
@@ -30,7 +30,7 @@ def parse_argv():
     '''Load program parser'''
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="version",
-                        version="ats version %s" % abs.version)
+                        version="%(prog)s version " + VERSION)
     parser.add_argument("-d", "--debug", action="store_true",
         help="debug mode")
     parser.add_argument("-c", "--config", default=None,

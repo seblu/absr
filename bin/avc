@@ -23,7 +23,7 @@
 from abs.config import BaseConfigFile
 from abs.controller import VersionController
 from abs.database import JsonDatabase
-import abs
+from abs import VERSION
 import abs.error
 import argparse
 import logging
@@ -32,7 +32,7 @@ def parse_argv():
     '''Parse command line arguments'''
     p_main = argparse.ArgumentParser()
     p_main.add_argument("--version", action="version",
-                        version="%(prog)s version " + str(abs.version))
+                        version="%(prog)s version " + VERSION)
     p_main.add_argument("--debug", action="store_true",
                         help="debug mode")
     p_main.add_argument("-c", "--config", default=None,

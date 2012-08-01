@@ -23,4 +23,4 @@ import logging
 logging.basicConfig(format="%(levelname)s: %(message)s")
 
 # abs version
-version = 0
+VERSION = "0"

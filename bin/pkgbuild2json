@@ -20,7 +20,7 @@
 
 '''Transform PKGBUILD into JSON'''
 
-import abs
+from abs import VERSION
 import argparse
 import json
 import logging
@@ -32,7 +32,7 @@ def parse_argv():
     '''Parse command line arguments'''
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="version",
-                        version="pkgbuild2json version %s" % abs.version)
+                        version="%(prog)s version " + VERSION)
     parser.add_argument("--env", action="store_true",
                         help="print env into JSON")
     parser.add_argument("PKGBUILD", nargs="?", default="PKGBUILD")
