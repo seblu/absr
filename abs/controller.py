@@ -17,6 +17,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+from abs import USER_AGENT
+from urllib.request import urlopen, Request
 import abs.config
 import abs.error
 import configparser
@@ -26,8 +28,6 @@ import logging
 import os
 import re
 import sys
-import urllib.error
-import urllib.request
 
 class VersionController(object):
     '''
@@ -69,9 +69,10 @@ class VersionController(object):
         try:
             logging.debug("Requesting url: %s" % url)
             logging.debug("Timeout is %f" % timeout)
-            o = urllib.request.urlopen(url, timeout=timeout)
+            url_req = Request(url, headers={"User-Agent": USER_AGENT})
+            url_fd = urlopen(url_req, timeout=timeout)
             logging.debug("Version regex: %s" % regex)
-            v = re.findall(regex, o.read().decode("utf-8"))
+            v = re.findall(regex, url_fd.read().decode("utf-8"))
             if v is None:
                 raise abs.error.VersionNotFound("No regex match on upstream")
             # remove duplicity
@@ -100,11 +101,12 @@ class VersionController(object):
         for arch in archs:
             for repo in repos:
                 url = "http://www.archlinux.org/packages/%s/%s/%s/json" % (repo, arch, name)
+                url_req = Request(url, headers={"User-Agent": USER_AGENT})
                 logging.debug("Requesting url: %s" % url)
                 logging.debug("Timeout is %f" % timeout)
                 try:
-                    o = urllib.request.urlopen(url, timeout=timeout)
-                    d = json.loads(o.read().decode("utf-8"))
+                    url_fd = urlopen(url_req, timeout=timeout)
+                    d = json.loads(url_fd.read().decode("utf-8"))
                     v = d["pkgver"]
                     logging.debug("Archlinux version is : %s" % v)
                     return v
@@ -119,10 +121,11 @@ class VersionController(object):
             # retrieve config timeout
             timeout = float(value.get("timeout", None))
             url = "%s?type=info&arg=%s" % (self.AUR_RPC, name)
+            url_req = Request(url, headers={"User-Agent": USER_AGENT})
             logging.debug("Requesting url: %s" % url)
             logging.debug("Timeout is %f" % timeout)
-            o = urllib.request.urlopen(url, timeout=timeout)
-            d = json.loads(o.read().decode("utf-8"))
+            url_fd = urlopen(url_req, timeout=timeout)
+            d = json.loads(url_fd.read().decode("utf-8"))
             v = d["results"]["Version"].rsplit("-")[0]
             logging.debug("AUR version is : %s" % v)
             return v

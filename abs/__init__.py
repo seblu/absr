@@ -24,3 +24,6 @@ logging.basicConfig(format="%(levelname)s: %(message)s")
 
 # abs version
 VERSION = "0"
+
+# abs user agent
+USER_AGENT = "abs v%s" % VERSION
