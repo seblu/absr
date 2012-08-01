@@ -30,31 +30,55 @@ import logging
 
 def parse_argv():
     '''Parse command line arguments'''
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--version", action="version",
-                        version="avc version %s" % abs.version)
-    parser.add_argument("--debug", action="store_true",
+    p_main = argparse.ArgumentParser()
+    p_main.add_argument("--version", action="version",
+                        version="%(prog)s version " + str(abs.version))
+    p_main.add_argument("--debug", action="store_true",
                         help="debug mode")
-    parser.add_argument("-c", "--config", default=None,
-                        help="config file with url to check")
-    parser.add_argument("-C", "--cache", default=None,
-                        help="cache file with saved package and version")
-    parser.add_argument("-d", "--diff-cache", action="store_true",
-                        help="display version not in cache")
-    parser.add_argument("-n", "--diff-new", action="store_true",
-                        help="display only new versions")
-    parser.add_argument("-p", "--packages", nargs='+', default=None,
-                        help="only check listed packages")
-    parser.add_argument("-S", "--no-cache", action="store_true",
-                        help="don't save version in cache")
-    actiongroup = parser.add_mutually_exclusive_group()
-    actiongroup.add_argument("-l", "--list", action="store_true",
-                             help="list registered packages")
-    actiongroup.add_argument("-L", "--list-cache", action="store_true",
-                             help="list cached packages and versions")
-    actiongroup.add_argument("--compare-modes", action="store_true",
-                             help="display comparaison modes")
-    return parser.parse_args()
+    p_main.add_argument("-c", "--config", default=None,
+                        help="config file path")
+    p_main.add_argument("-C", "--cache", default=None,
+                        help="cache file path")
+    sp_main = p_main.add_subparsers()
+    # check parser
+    p_check = sp_main.add_parser("check", help="check packages versions")
+    p_check.add_argument("packages", nargs='*', default=[],
+                         help="only check this packages")
+    p_check.add_argument("-c", "--diff-cache", action="store_true",
+                         help="doesn't display cached versions")
+    p_check.add_argument("-n", "--diff-new", action="store_true",
+                         help="only display new versions")
+    p_check.add_argument("-S", "--no-cache", action="store_true",
+                         help="don't save version in cache")
+    p_check.set_defaults(func=command_check)
+    # list parser
+    p_list = sp_main.add_parser("list", help="list various informations")
+    p_list.add_argument("what", choices=("config", "cache", "modes"),
+                        help="config: list configured packages. "
+                        "cache: list packages in cache. "
+                        "modes: list comparaison modes. ")
+    p_list.set_defaults(func=command_list)
+    return p_main.parse_args()
+
+def command_check(args, vctrl):
+    '''Handle check command call'''
+    # filter packages
+    for pkg in list(args.packages):
+        vctrl.packages.pop(pkg, None)
+    vctrl.print_versions(args.diff_new, args.diff_cache)
+    # save version database
+    if not args.no_cache:
+        vctrl.cache.save(args.cache, "avc.db")
+
+def command_list(args, vctrl):
+    '''Handle list command call'''
+    # call the right action
+    if args.what == "config":
+        vctrl.print_names()
+    elif args.what == "cache":
+        vctrl.print_cache()
+    elif args.what == "modes":
+        vctrl.print_modes()
 
 def main():
     '''Program entry point'''
@@ -70,29 +94,13 @@ def main():
         logging.error("Configuration file is missing. "
                       "Please create it before!")
         exit(abs.error.ERR_FATAL)
-    # load version database
+    # load cache database
     cachedb = JsonDatabase()
     cachedb.load(args.cache, "avc.db")
-    # filter packages
-    if args.packages is not None:
-        for pkg in list(packages):
-            if pkg not in args.packages:
-                del packages[pkg]
     # load checking controller
     vctrl = VersionController(packages, cachedb)
-    # call the right action
-    if args.list == True:
-        vctrl.print_names()
-    elif args.list_cache:
-        vctrl.print_cache()
-    elif args.compare_modes:
-        vctrl.print_modes()
-    else:
-        vctrl.print_versions(args.diff_new, args.diff_cache)
-    # save version database
-    if not args.no_cache:
-        cachedb.save(args.cache, "avc.db")
-    return True
+    # call command function
+    return args.func(args, vctrl)
 
 if __name__ == '__main__':
     main()
