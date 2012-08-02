@@ -17,15 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+'''Controller Module'''
+
 from abs import USER_AGENT
 from urllib.request import urlopen, Request
 import abs.config
 import abs.error
-import configparser
 import distutils.version
 import json
 import logging
-import os
 import re
 import sys
 
@@ -51,7 +51,8 @@ class VersionController(object):
             "none": self.get_version_none
             }
 
-    def get_version_upstream(self, name, value):
+    @staticmethod
+    def get_version_upstream(name, value):
         '''Return upstream version'''
         logging.debug("Get upstream version")
         # check upstream param
@@ -62,7 +63,8 @@ class VersionController(object):
         regex = value.get("regex", "%s[-_]v?(%s)%s" % (
                     value.get("regex_name", name),
                     value.get("regex_version", "[-.\w]+"),
-                    value.get("regex_ext", "\.(?:tar(?:\.gz|\.bz2|\.xz)?|tgz|tbz2|zip)")))
+                    value.get("regex_ext",
+                              "\.(?:tar(?:\.gz|\.bz2|\.xz)?|tgz|tbz2|zip)")))
         # retrieve config timeout
         timeout = float(value.get("timeout", None))
         # do the job
@@ -83,11 +85,12 @@ class VersionController(object):
             # list selected version
             logging.debug("Upstream version is : %s" % v)
             return v
-        except Exception as e:
-            raise abs.error.VersionNotFound("Upstream check failed: %s" % e)
+        except Exception as exp:
+            raise abs.error.VersionNotFound("Upstream check failed: %s" % exp)
         assert(False)
 
-    def get_version_archlinux(self, name, value):
+    @staticmethod
+    def get_version_archlinux(name, value):
         '''Return archlinux version'''
         logging.debug("Get archlinux version")
         # if arch is specified
@@ -100,7 +103,8 @@ class VersionController(object):
         timeout = float(value.get("timeout", None))
         for arch in archs:
             for repo in repos:
-                url = "http://www.archlinux.org/packages/%s/%s/%s/json" % (repo, arch, name)
+                url = "http://www.archlinux.org/packages/%s/%s/%s/json" % (
+                    repo, arch, name)
                 url_req = Request(url, headers={"User-Agent": USER_AGENT})
                 logging.debug("Requesting url: %s" % url)
                 logging.debug("Timeout is %f" % timeout)
@@ -110,17 +114,18 @@ class VersionController(object):
                     v = d["pkgver"]
                     logging.debug("Archlinux version is : %s" % v)
                     return v
-                except Exception as e:
-                    logging.debug("Archlinux check failed: %s" % e)
+                except Exception as exp:
+                    logging.debug("Archlinux check failed: %s" % exp)
         raise abs.error.VersionNotFound("No Archlinux package found")
 
-    def get_version_aur(self, name, value):
+    @staticmethod
+    def get_version_aur(name, value):
         '''Return archlinux user repository version'''
         logging.debug("Get AUR version")
         try:
             # retrieve config timeout
             timeout = float(value.get("timeout", None))
-            url = "%s?type=info&arg=%s" % (self.AUR_RPC, name)
+            url = "%s?type=info&arg=%s" % (VersionController.AUR_RPC, name)
             url_req = Request(url, headers={"User-Agent": USER_AGENT})
             logging.debug("Requesting url: %s" % url)
             logging.debug("Timeout is %f" % timeout)
@@ -129,8 +134,8 @@ class VersionController(object):
             v = d["results"]["Version"].rsplit("-")[0]
             logging.debug("AUR version is : %s" % v)
             return v
-        except Exception as e:
-            raise abs.error.VersionNotFound("AUR check failed: %s" % e)
+        except Exception as exp:
+            raise abs.error.VersionNotFound("AUR check failed: %s" % exp)
         assert(False)
 
     def get_version_cache(self, name, value):
@@ -139,7 +144,8 @@ class VersionController(object):
         logging.debug("Cache version is : %s" % v_cache)
         return v_cache
 
-    def get_version_none(self, name, value):
+    @staticmethod
+    def get_version_none(name, value):
         '''Return cache version'''
         return None
 
@@ -159,7 +165,8 @@ class VersionController(object):
                 e_upstream = value.get("eval_upstream", None)
                 if e_upstream is not None:
                     v_upstream = eval(e_upstream, {}, {"version": v_upstream})
-                    logging.debug("eval_upstream produce version: %s" % v_upstream)
+                    logging.debug("eval_upstream produce version: %s" %
+                                  v_upstream)
                 # check upstream validity
                 if v_upstream is None:
                     raise abs.error.VersionNotFound("Upstream")
@@ -175,19 +182,20 @@ class VersionController(object):
                 e_compare = value.get("eval_compare", None)
                 if e_compare is not None:
                     v_compare = eval(e_compare, {}, {"version": v_compare})
-                    logging.debug("eval_compare produce version: %s" % v_compare)
-                # save version to cache
-                # after getting compared version (avoid interfering with cache mode)
+                    logging.debug("eval_compare produce version: %s" %
+                                  v_compare)
+                # save version to cache after getting compared version
+                # to avoid interfering with cache mode
                 self.cache[name] = v_upstream
                 # only new version mode
                 if only_new and (v_compare is None or v_upstream == v_compare):
                     logging.debug("%s: skipped by only new mode" % name)
                     continue
                 yield (name, v_upstream, v_compare)
-            except abs.error.VersionNotFound as e:
-                logging.warning("%s: Version not found: %s" % (name, e))
-            except abs.error.ConfigFileError as e:
-                logging.warning("%s: Invalid configuration: %s" % (name, e))
+            except abs.error.VersionNotFound as exp:
+                logging.warning("%s: Version not found: %s" % (name, exp))
+            except abs.error.ConfigFileError as exp:
+                logging.warning("%s: Invalid configuration: %s" % (name, exp))
 
     def print_names(self):
         '''Print packages name'''
@@ -206,10 +214,13 @@ class VersionController(object):
 
     def print_versions(self, only_new=False, not_in_cache=False):
         '''Print versions'''
-        for name, v_upstream, v_compare in self.check_versions(only_new, not_in_cache):
+        for name, v_upstream, v_compare in self.check_versions(only_new,
+                                                               not_in_cache):
             self.print_version(name, v_upstream, v_compare)
 
-    def print_version(self, name, v1, v2):
+    @staticmethod
+    def print_version(name, v1, v2):
+        '''Handle printing of 2 versions'''
         if sys.stdout.isatty():
             if v2 is None:
                 color = '\033[1;33m'
@@ -225,9 +236,5 @@ class VersionController(object):
         if v2 is not None:
             print(" - %s" % v2, end="")
         print(reset)
-
-    def save(self, database):
-        '''Save poll result to database'''
-        return
 
 # vim:set ts=4 sw=4 et ai:

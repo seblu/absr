@@ -17,31 +17,33 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+'''Database Module'''
+
 from abs.error import BaseError
-import os
+from xdg.BaseDirectory import xdg_cache_home
 import json
 import logging
-import xdg.BaseDirectory as basedirectory
+import os
 
 class JsonDatabase(dict):
     '''Json database'''
 
-    def _get_path(self, path, default_filename, create=False):
+    @staticmethod
+    def _get_path(path, default_filename, create=False):
         '''Get a path and ensure its exists if create is True'''
         if path is None:
-            path = os.path.join(basedirectory.xdg_cache_home,
-                                "abs", default_filename)
+            path = os.path.join(xdg_cache_home, "abs", default_filename)
         if create and not os.path.exists(path):
             directory = os.path.split(path)[0]
             if directory != "" and not os.path.isdir(directory):
                 try:
                     os.makedirs(directory)
-                except (IOError, OSError) as e:
-                    raise BaseError("Create database directories failed: %s" % e)
+                except (IOError, OSError) as exp:
+                    raise BaseError("Create database path failed: %s" % exp)
             try:
                 open(path, "a")
-            except (IOError, OSError) as e:
-                raise BaseError("Create database filename failed; %s" % e)
+            except (IOError, OSError) as exp:
+                raise BaseError("Create database filename failed; %s" % exp)
         return path
 
     def load(self, path, default_filename):
@@ -55,8 +57,8 @@ class JsonDatabase(dict):
                 fileobj = open(path, "r")
                 dico = json.load(fileobj)
                 self.update(dico)
-            except Exception as e:
-                logging.error("Unable to load database %s: %s" % (path, e))
+            except Exception as exp:
+                logging.error("Unable to load database %s: %s" % (path, exp))
 
 
     def save(self, path, default_filename, save_empty=False):
@@ -71,6 +73,6 @@ class JsonDatabase(dict):
             logging.debug("Saving database %s" % path)
             try:
                 fileobj = open(path, "w")
-                dico = json.dump(self, fileobj)
-            except Exception as e:
-                logging.error("Unable to save database %s: %s" % (path, e))
+                json.dump(self, fileobj)
+            except Exception as exp:
+                logging.error("Unable to save database %s: %s" % (path, exp))
