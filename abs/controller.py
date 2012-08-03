@@ -19,10 +19,10 @@
 
 '''Controller Module'''
 
+
 from abs import USER_AGENT
+from abs.error import ConfigFileError, InvalidConfigFile, VersionNotFound
 from urllib.request import urlopen, Request
-import abs.config
-import abs.error
 import distutils.version
 import json
 import logging
@@ -58,7 +58,7 @@ class VersionController(object):
         # check upstream param
         if "url" not in value:
             logging.error("No url specified for %s" % name)
-            raise abs.error.InvalidConfigFile("Missing url in config file")
+            raise InvalidConfigFile("Missing url in config file")
         url = value["url"]
         regex = value.get("regex", "%s[-_]v?(%s)%s" % (
                     value.get("regex_name", name),
@@ -76,7 +76,7 @@ class VersionController(object):
             logging.debug("Version regex: %s" % regex)
             v = re.findall(regex, url_fd.read().decode("utf-8"))
             if v is None:
-                raise abs.error.VersionNotFound("No regex match on upstream")
+                raise VersionNotFound("No regex match on upstream")
             # remove duplicity
             v = list(set(v))
             # list all found versions
@@ -86,7 +86,7 @@ class VersionController(object):
             logging.debug("Upstream version is : %s" % v)
             return v
         except Exception as exp:
-            raise abs.error.VersionNotFound("Upstream check failed: %s" % exp)
+            raise VersionNotFound("Upstream check failed: %s" % exp)
         assert(False)
 
     @staticmethod
@@ -116,7 +116,7 @@ class VersionController(object):
                     return v
                 except Exception as exp:
                     logging.debug("Archlinux check failed: %s" % exp)
-        raise abs.error.VersionNotFound("No Archlinux package found")
+        raise VersionNotFound("No Archlinux package found")
 
     @staticmethod
     def get_version_aur(name, value):
@@ -135,7 +135,7 @@ class VersionController(object):
             logging.debug("AUR version is : %s" % v)
             return v
         except Exception as exp:
-            raise abs.error.VersionNotFound("AUR check failed: %s" % exp)
+            raise VersionNotFound("AUR check failed: %s" % exp)
         assert(False)
 
     def get_version_cache(self, name, value):
@@ -156,9 +156,9 @@ class VersionController(object):
                 # get compare mode
                 compare = value.get("compare", None)
                 if compare is None:
-                    raise abs.error.InvalidConfigFile("No defined compare mode")
+                    raise InvalidConfigFile("No defined compare mode")
                 if compare not in self.compare_table:
-                    raise abs.error.InvalidConfigFile("Invalid compare mode")
+                    raise InvalidConfigFile("Invalid compare mode")
                 # get upstream version
                 v_upstream = self.get_version_upstream(name, value)
                 # apply eval to upstream
@@ -169,7 +169,7 @@ class VersionController(object):
                                   v_upstream)
                 # check upstream validity
                 if v_upstream is None:
-                    raise abs.error.VersionNotFound("Upstream")
+                    raise VersionNotFound("Upstream")
                 # get cached version
                 v_cache = self.cache.get(name, None)
                 # only not in cache mode
@@ -192,9 +192,9 @@ class VersionController(object):
                     logging.debug("%s: skipped by only new mode" % name)
                     continue
                 yield (name, v_upstream, v_compare)
-            except abs.error.VersionNotFound as exp:
+            except VersionNotFound as exp:
                 logging.warning("%s: Version not found: %s" % (name, exp))
-            except abs.error.ConfigFileError as exp:
+            except ConfigFileError as exp:
                 logging.warning("%s: Invalid configuration: %s" % (name, exp))
 
     def print_names(self):
