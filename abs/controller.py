@@ -218,23 +218,28 @@ class VersionController(object):
                                                                not_in_cache):
             self.print_version(name, v_upstream, v_compare)
 
-    @staticmethod
-    def print_version(name, v1, v2):
+    def print_version(self, name, v1, v2=None):
         '''Handle printing of 2 versions'''
+        # define used color
+        c_blue =  c_white =  c_yellow =  c_compare =  c_reset = ''
         if sys.stdout.isatty():
-            if v2 is None:
-                color = '\033[1;33m'
-            elif v1 == v2:
-                color = '\033[1;32m'
-            else:
-                color = '\033[1;31m'
-            reset = '\033[m'
-        else:
-            color = ''
-            reset = ''
-        print("%s[%s] %s" % (color, name, v1), end="")
+            if v2 is None:   c_compare = '\033[1;33m'
+            elif v1 == v2:   c_compare = '\033[1;32m'
+            else:            c_compare = '\033[1;31m'
+            c_blue = '\033[1;34m'
+            c_white = '\033[1;37m'
+            c_yellow = '\033[1;33m'
+            c_reset = '\033[m'
+        # print package name
+        toprint = "%s[%s%s%s]" % (c_blue, c_white, name, c_blue)
+        # print upstream
+        toprint += " %sup: %s " % (c_yellow, v1)
         if v2 is not None:
-            print(" - %s" % v2, end="")
-        print(reset)
+            # print separator
+            toprint += "%s|" % c_blue
+            origin = self.packages.get(name,{}).get("compare", "other")
+            toprint += " %s%s: %s" % (c_compare, origin, v2)
+        toprint += c_reset
+        print(toprint)
 
 # vim:set ts=4 sw=4 et ai:
